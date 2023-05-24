@@ -1,3 +1,5 @@
+//! # rust-webserver
+//! Simple webserver built to learn basics of Rust backend development.
 use std::{
     fs,
     io::{prelude::*, BufReader},
@@ -5,9 +7,11 @@ use std::{
     thread,
     time::Duration,
 };
+use rust_webserver::ThreadPool;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let pool = ThreadPool::new(5);
 
     /*
     A single stream represents an open connection between the client and the server.
@@ -20,7 +24,7 @@ fn main() {
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        thread::spawn(|| {
+        pool.execute(|| {
             handle_connection(stream);
         });
     }
@@ -36,7 +40,8 @@ fn handle_connection(mut stream: TcpStream) {
         .take_while(|line| !line.is_empty())
         .collect();
 
-    println!("Request: {:#?}", http_request);
+    // Print request and host
+    println!("Request: {:#?} from {:#?}", http_request[0], http_request[1]);
 
     // Check the first line of the request and respond with HTML
     let contents: String;
@@ -54,6 +59,7 @@ fn handle_connection(mut stream: TcpStream) {
         _ => ("HTTP/1.1 404 NOT FOUND", "html/404.html")
     };
 
+    // NB: number of `\r\n`'s matters!
     contents = fs::read_to_string(file_path).unwrap();
     let length = contents.len();
     let response = format!("{status_line}\r\n\
