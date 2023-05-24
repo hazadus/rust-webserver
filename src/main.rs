@@ -1,4 +1,5 @@
 use std::{
+    fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
 };
@@ -21,7 +22,7 @@ fn main() {
     }
 }
 
-/// Handle incoming TCP connections and print HTTP request
+/// Handle incoming TCP connections, print HTTP request and return the HTML response.
 fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
     let http_request: Vec<_> = buf_reader
@@ -32,6 +33,15 @@ fn handle_connection(mut stream: TcpStream) {
 
     println!("Request: {:#?}", http_request);
 
-    let response = "HTTP/1.1 200 OK\r\n\r\n";
+    let status_line = "HTTP/1.1 200 OK";
+    let content_type = "Content-Type: text/html; charset=utf-8";
+    let contents = fs::read_to_string("html/index.html").unwrap();
+    let length = contents.len();
+
+    let response = format!("{status_line}\r\n\
+    {content_type}\r\n\
+    Content-Length: {length}\r\n\r\n\
+    {contents}");
+
     stream.write_all(response.as_bytes()).unwrap();
 }
