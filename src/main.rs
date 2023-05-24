@@ -2,6 +2,8 @@ use std::{
     fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
+    thread,
+    time::Duration,
 };
 
 fn main() {
@@ -38,10 +40,16 @@ fn handle_connection(mut stream: TcpStream) {
     let contents: String;
     let content_type = "Content-Type: text/html; charset=utf-8";
 
-    let (status_line, file_path) = if http_request[0] == "GET / HTTP/1.1" {
-        ("HTTP/1.1 200 OK", "html/index.html")
-    } else {
-        ("HTTP/1.1 404 NOT FOUND", "html/404.html")
+    // We need to explicitly match on a slice of request_line to pattern match against the string
+    // literal values; match does not do automatic referencing and dereferencing like the equality
+    // method does. Hence `[..]` in `match &http_request[0][..]`.
+    let (status_line, file_path) = match &http_request[0][..] {
+        "GET / HTTP/1.1" => ("HTTP/1.1 200 OK", "html/index.html"),
+        "GET /sleep HTTP/1.1" => {
+            thread::sleep(Duration::from_secs(5));
+            ("HTTP/1.1 200 OK", "html/index.html")
+        },
+        _ => ("HTTP/1.1 404 NOT FOUND", "html/404.html")
     };
 
     contents = fs::read_to_string(file_path).unwrap();
