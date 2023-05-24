@@ -46,6 +46,12 @@ fn handle_connection(mut stream: TcpStream) {
     // Check the first line of the request and respond with HTML
     let contents: String;
     let content_type = "Content-Type: text/html; charset=utf-8";
+    let request = String::from(&http_request[0]);
+    let request_tokens: Vec<&str> = request.split(" ").collect();
+    let request_method = request_tokens[0];
+    let requested_file = format!("html{}", request_tokens[1]);
+    let mut file_path = "html/404.html";
+    let mut status_code = "HTTP/1.1 404 NOT FOUND";
 
     // We need to explicitly match on a slice of request_line to pattern match against the string
     // literal values; match does not do automatic referencing and dereferencing like the equality
@@ -56,7 +62,19 @@ fn handle_connection(mut stream: TcpStream) {
             thread::sleep(Duration::from_secs(5));
             ("HTTP/1.1 200 OK", "html/index.html")
         },
-        _ => ("HTTP/1.1 404 NOT FOUND", "html/404.html")
+        _ => {
+            if request_method == "GET" {
+                let file_exists = std::path::Path::new(&requested_file).exists();
+
+                if file_exists {
+                    status_code = "HTTP/1.1 200 OK";
+                    file_path = &requested_file;
+                } else {
+                    println!("File does not exist: {}", requested_file);
+                }
+            }
+            (status_code, file_path)
+        }
     };
 
     // NB: number of `\r\n`'s matters!
