@@ -21,6 +21,7 @@ fn main() {
     }
 }
 
+/// Handle incoming TCP connections and print HTTP request
 fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
     let http_request: Vec<_> = buf_reader
@@ -30,4 +31,7 @@ fn handle_connection(mut stream: TcpStream) {
         .collect();
 
     println!("Request: {:#?}", http_request);
+
+    let response = "HTTP/1.1 200 OK\r\n\r\n";
+    stream.write_all(response.as_bytes()).unwrap();
 }
