@@ -24,6 +24,7 @@ fn main() {
 
 /// Handle incoming TCP connections, print HTTP request and return the HTML response.
 fn handle_connection(mut stream: TcpStream) {
+    // Read HTTP request and print it
     let buf_reader = BufReader::new(&mut stream);
     let http_request: Vec<_> = buf_reader
         .lines()
@@ -33,15 +34,26 @@ fn handle_connection(mut stream: TcpStream) {
 
     println!("Request: {:#?}", http_request);
 
-    let status_line = "HTTP/1.1 200 OK";
+    // Check the first line of the request and respond with HTML
+    let status_line: &str;
+    let contents: String;
+    let file_path: String;
     let content_type = "Content-Type: text/html; charset=utf-8";
-    let contents = fs::read_to_string("html/index.html").unwrap();
-    let length = contents.len();
 
+    if http_request[0] == "GET / HTTP/1.1" {
+        status_line = "HTTP/1.1 200 OK";
+        file_path = String::from("html/index.html");
+    } else {
+        status_line = "HTTP/1.1 404 NOT FOUND";
+        file_path = String::from("html/404.html");
+    }
+
+    contents = fs::read_to_string(file_path).unwrap();
+    let length = contents.len();
     let response = format!("{status_line}\r\n\
-    {content_type}\r\n\
-    Content-Length: {length}\r\n\r\n\
-    {contents}");
+            {content_type}\r\n\
+            Content-Length: {length}\r\n\r\n\
+            {contents}");
 
     stream.write_all(response.as_bytes()).unwrap();
 }
