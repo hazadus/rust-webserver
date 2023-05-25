@@ -28,6 +28,8 @@ fn main() {
             handle_connection(stream);
         });
     }
+
+    println!("Shutting down.");
 }
 
 /// Handle incoming TCP connections, print HTTP request and return the HTML response.
