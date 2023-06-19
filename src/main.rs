@@ -7,11 +7,16 @@ use std::{
     thread,
     time::Duration,
 };
+use colored::*;
 use rust_webserver::ThreadPool;
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let address = "127.0.0.1:7878";
+    let listener = TcpListener::bind(address).unwrap();
     let pool = ThreadPool::new(5);
+
+    let startup_message = "Started webserver on".green();
+    println!("{} {}", startup_message, address.blue());
 
     /*
     A single stream represents an open connection between the client and the server.
